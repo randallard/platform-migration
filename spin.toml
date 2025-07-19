@@ -1,0 +1,127 @@
+spin_manifest_version = 2
+
+[application]
+name = "platform-migration"
+version = "0.1.0"
+authors = ["Platform Migration Team <platform@example.com>"]
+description = "Monolith to Microservices Migration Platform"
+
+[application.trigger.http]
+base = "/"
+
+# External hosts that services are allowed to connect to
+[application.triggers.http.variables]
+[application.variables]
+database_url = { default = "postgresql://postgres@localhost:5432/platform_migration" }
+redis_url = { default = "redis://localhost:6379" }
+vault_url = { default = "http://localhost:8200" }
+encryption_key = { required = true, secret = true }
+jwt_secret = { required = true, secret = true }
+pacer_client_id = { secret = true }
+pacer_client_secret = { secret = true }
+notification_api_key = { secret = true }
+
+# Document Service - Spin/WASM component
+[[trigger.http]]
+route = "/api/v1/documents/..."
+component = "document-service"
+
+[component.document-service]
+source = "target/wasm32-wasip1/release/document_service.wasm"
+allowed_outbound_hosts = [
+    "https://pacer.uscourts.gov",
+    "https://api.uscourts.gov", 
+    "postgresql://localhost:5432",
+    "http://vault:8200",
+    "http://localhost:8200",
+    "redis://localhost:6379",
+    "http://notification-service.spin.internal"
+]
+[component.document-service.build]
+command = "cargo build --release --target wasm32-wasip1 --package document-service"
+watch = ["services/document-service/src/**/*.rs", "shared/**/*.rs"]
+
+# Notification Service - Traditional Rust/Axum service (not WASM)
+[[trigger.http]]
+route = "/api/v1/notifications/..."
+component = "notification-service"
+
+[component.notification-service]
+source = "target/wasm32-wasip1/release/notification_service.wasm"
+allowed_outbound_hosts = [
+    "https://api.sendgrid.com",
+    "https://api.mailgun.net",
+    "https://hooks.slack.com",
+    "postgresql://localhost:5432",
+    "redis://localhost:6379",
+    "http://localhost:*",
+    "https://*.amazonaws.com"
+]
+[component.notification-service.build]
+command = "cargo build --release --target wasm32-wasip1 --package notification-service"
+watch = ["services/notification-service/src/**/*.rs", "shared/**/*.rs"]
+
+# Gateway Service - API Gateway and routing
+[[trigger.http]]
+route = "/api/..."
+component = "gateway-service"
+
+[component.gateway-service]
+source = "target/wasm32-wasip1/release/gateway_service.wasm"
+allowed_outbound_hosts = [
+    "http://document-service.spin.internal",
+    "http://notification-service.spin.internal",
+    "postgresql://localhost:5432",
+    "redis://localhost:6379",
+    "http://vault:8200",
+    "http://localhost:8200"
+]
+[component.gateway-service.build]
+command = "cargo build --release --target wasm32-wasip1 --package gateway-service"
+watch = ["services/gateway-service/src/**/*.rs", "shared/**/*.rs"]
+
+# Static file server for frontend assets
+[[trigger.http]]
+route = "/..."
+component = "frontend"
+
+[component.frontend]
+source = { url = "https://github.com/fermyon/spin-fileserver/releases/download/v0.2.0/spin_static_fs.wasm", digest = "sha256:65456bf4e84cf81b62075e761b2b0afaffaef2d0aeda521b245150f76b96421b" }
+files = [{ source = "static", destination = "/" }]
+
+# Health check endpoint
+[[trigger.http]]
+route = "/health"
+component = "health-check"
+
+[component.health-check]
+source = "target/wasm32-wasip1/release/health_check.wasm"
+[component.health-check.build]
+command = "cargo build --release --target wasm32-wasip1 --bin health-check"
+
+# Configuration for different environments
+[tool.spin]
+environment_variables = [
+    "DATABASE_URL",
+    "REDIS_URL", 
+    "VAULT_URL",
+    "RUST_LOG",
+    "PLATFORM_MIGRATION_ENV"
+]
+
+# Development-specific configuration
+[profile.dev]
+[profile.dev.variables]
+rust_log = "debug"
+database_url = "postgresql://postgres@localhost:5432/platform_migration_dev"
+
+# Production configuration  
+[profile.production]
+[profile.production.variables]
+rust_log = "info"
+
+# Test configuration
+[profile.test]
+[profile.test.variables]
+rust_log = "debug"
+database_url = "postgresql://postgres@localhost:5432/platform_migration_test"
