@@ -1,0 +1,173 @@
+# Spin Runtime Configuration for Platform Migration
+# This file contains runtime configuration for Spin applications
+
+[config_provider]
+type = "env"
+
+# Database configuration
+[database_url]
+default = "postgresql://postgres@localhost:5432/platform_migration"
+
+[redis_url]  
+default = "redis://localhost:6379"
+
+[vault_url]
+default = "http://localhost:8200"
+
+# Security configuration (these should be set via environment variables in production)
+[encryption_key]
+default = "your-32-byte-encryption-key-here-change-in-prod"
+
+[jwt_secret]
+default = "your-jwt-secret-key-change-in-production"
+
+# PACER integration (federal court system)
+[pacer_client_id]
+default = ""
+
+[pacer_client_secret]
+default = ""
+
+# Notification service configuration
+[notification_api_key]
+default = "dev-notification-api-key"
+
+[sendgrid_api_key]
+default = ""
+
+[slack_webhook_url]
+default = ""
+
+# Application configuration
+[app_name]
+default = "platform-migration"
+
+[environment]
+default = "development"
+
+[log_level]
+default = "debug"
+
+# Service endpoints for internal communication
+[document_service_url]
+default = "http://document-service.spin.internal"
+
+[notification_service_url]
+default = "http://notification-service.spin.internal"
+
+[gateway_service_url]
+default = "http://gateway-service.spin.internal"
+
+# External service configuration
+[pacer_base_url]
+default = "https://pacer.uscourts.gov"
+
+[pacer_api_url]
+default = "https://api.uscourts.gov"
+
+# File storage configuration
+[max_file_size]
+default = "10485760"  # 10MB in bytes
+
+[allowed_file_types]
+default = "pdf,doc,docx,txt,jpg,jpeg,png"
+
+# Encryption settings
+[encryption_algorithm]
+default = "AES-256-GCM"
+
+[key_derivation_iterations]
+default = "100000"
+
+# Session and token configuration
+[jwt_expiration_hours]
+default = "24"
+
+[session_timeout_minutes]
+default = "30"
+
+[refresh_token_expiration_days]
+default = "7"
+
+# Database connection pool settings
+[db_max_connections]
+default = "10"
+
+[db_min_connections]
+default = "1"
+
+[db_connection_timeout_seconds]
+default = "30"
+
+# Redis configuration
+[redis_pool_size]
+default = "10"
+
+[redis_timeout_seconds]
+default = "5"
+
+# Audit logging configuration
+[audit_log_enabled]
+default = "true"
+
+[audit_log_level]
+default = "info"
+
+# Performance and monitoring
+[request_timeout_seconds]
+default = "30"
+
+[max_concurrent_requests]
+default = "100"
+
+# Health check configuration
+[health_check_interval_seconds]
+default = "30"
+
+[health_check_timeout_seconds]
+default = "5"
+
+# Compliance and security settings
+[require_mfa]
+default = "false"  # Set to true in production
+
+[password_min_length]
+default = "12"
+
+[password_require_special_chars]
+default = "true"
+
+[login_attempt_limit]
+default = "5"
+
+[account_lockout_duration_minutes]
+default = "15"
+
+# Notification configuration
+[email_enabled]
+default = "true"
+
+[webhook_enabled]
+default = "true"
+
+[notification_retry_attempts]
+default = "3"
+
+[notification_retry_delay_seconds]
+default = "60"
+
+# Development-specific settings (override in production)
+[development]
+debug_mode = "true"
+mock_external_services = "false"
+enable_test_endpoints = "true"
+cors_allow_all_origins = "true"
+
+# Production settings (should be overridden with actual values)
+[production]
+debug_mode = "false"
+mock_external_services = "false"
+enable_test_endpoints = "false"
+cors_allow_all_origins = "false"
+require_https = "true"
+hsts_max_age_seconds = "31536000"
